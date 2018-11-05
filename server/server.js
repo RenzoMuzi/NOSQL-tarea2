@@ -12,6 +12,22 @@ const port = process.env.PORT || 3000;
 const app = express();
 app.use(bodyParser.json());
 
+/**
+|--------------------------------------------------
+| POST - Crear Usuario
+|--------------------------------------------------
+*/
+app.post('/user', (req, res) => {
+    var comment = new Comment({
+        email: req.body.email,
+    });
+
+    comment.save().then((doc) => {
+        res.send(doc);
+    }, (e) => {
+        res.status(400).send(e);
+    })
+});
 
 /**
 |--------------------------------------------------
@@ -48,7 +64,7 @@ app.post('/comment', (req, res) => {
 
 /**
 |--------------------------------------------------
-| GET - Obtener comentarios hechos por usuario
+| GET - Listar comentarios de usuario
 |--------------------------------------------------
 */
 app.get('/comments/user/:email', (req, res) => {
