@@ -17,14 +17,22 @@ app.use(bodyParser.json());
 |--------------------------------------------------
 */
 app.post('/user', (req, res) => {
-    var comment = new User({
-        email: req.body.email,
-    });
+    User.find({ email: req.body.email }).then((user) =>{
+        if (user.length != 0) {
+            return res.status(500).send("Usuario ya se encuentra en el sistema");
+        }
 
-    comment.save().then((doc) => {
-        res.send(doc);
-    }, (e) => {
-        res.status(400).send(e);
+        var comment = new User({
+            email: req.body.email,
+        });
+
+        comment.save().then((doc) => {
+            res.send(doc);
+        }, (e) => {
+            res.status(400).send(e);
+        })
+    }).catch((e) => {
+        res.status(400).send();
     })
 });
 
