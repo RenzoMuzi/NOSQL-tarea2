@@ -10,6 +10,7 @@ const port = process.env.PORT || 3000;
 const app = express();
 app.use(bodyParser.json());
 
+
 /**
 |--------------------------------------------------
 | POST - Crear Usuario
@@ -33,15 +34,22 @@ app.post('/user', (req, res) => {
 |--------------------------------------------------
 */
 app.post('/comment', (req, res) => {
-    var comment = new Comment({
-        email: req.body.email,
-        text: req.body.text,
-    });
-
-    comment.save().then((doc) => {
-        res.send(doc);
-    }, (e) => {
-        res.status(400).send(e);
+    User.find({ email: req.body.email }).then((user) =>{
+        if (user.length == 0) {
+            return res.status(401).send("No te encuentras Autorizado para realizar esta operacion");
+        }
+        var comment = new Comment({
+            email: req.body.email,
+            text: req.body.text,
+        });
+    
+        comment.save().then((doc) => {
+            res.send(doc);
+        }, (e) => {
+            res.status(400).send(e);
+        })
+    }).catch((e) => {
+        res.status(400).send();
     })
 });
 
@@ -53,7 +61,7 @@ app.post('/comment', (req, res) => {
 app.get('/comments/user/:email', (req, res) => {
     var email = req.params.email;
     User.find({ email: email }).then((user) =>{
-        if (!user) {
+        if (user.length == 0) {
             return res.status(404).send();
         }
 
@@ -75,40 +83,47 @@ app.get('/comments/user/:email', (req, res) => {
 | PATCH - Comentar comentario
 |--------------------------------------------------
 */
-app.patch('/comment/:id', (req, res) => {  //antes que nada agregar comentario de comentario al sistema
-    var comment = new Comment({
-        email: req.body.email,
-        text: req.body.text,
-    });
-    
-    comment.save().then((commentBack) => {
-        var id = req.params.id;
-
-        if (!ObjectID.isValid(id)) {
-            return res.status(404).send();
+app.patch('/comment/:id', (req, res) => {  
+    User.find({ email: req.body.email }).then((user) =>{
+        if (user.length == 0) {
+            return res.status(401).send("No te encuentras Autorizado para realizar esta operacion");
         }
+        var comment = new Comment({
+            email: req.body.email,
+            text: req.body.text,
+        });
+        
+        comment.save().then((commentBack) => {
+            var id = req.params.id;
 
-        Comment.findByIdAndUpdate(id, {
-            $push:{
-                comments: {
-                    _id: new ObjectID(commentBack.id),
-                    email: req.body.email,
-                    text: req.body.text
-                }
-            } 
-         }, {
-            new: true
-         }).then((commentUpdated) => {
-           if (!commentUpdated) {
-               return res.status(404).send();
-           }
-           res.send({commentUpdated});
-         }).catch((e) => {
-            res.status(400).send();
-         });
+            if (!ObjectID.isValid(id)) {
+                return res.status(404).send();
+            }
 
-    }, (e) => {
-        res.status(400).send(e);
+            Comment.findByIdAndUpdate(id, {
+                $push:{
+                    comments: {
+                        _id: new ObjectID(commentBack.id),
+                        email: req.body.email,
+                        text: req.body.text
+                    }
+                } 
+            }, {
+                new: true
+            }).then((commentUpdated) => {
+            if (!commentUpdated) {
+                return res.status(404).send();
+            }
+            res.send({commentUpdated});
+            }).catch((e) => {
+                res.status(400).send();
+            });
+
+        }, (e) => {
+            res.status(400).send(e);
+        })
+    }).catch((e) => {
+        res.status(400).send();
     })
 });
 
@@ -122,7 +137,7 @@ app.get('/comment/:id', (req, res) => {
     if (!ObjectID.isValid(id)) {
         return res.status(404).send();
     }
-
+    
     Comment.findById(id).then((comment) => {
         if (!comment) {
             return res.status(404).send();
