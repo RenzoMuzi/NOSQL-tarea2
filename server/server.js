@@ -16,7 +16,7 @@ app.use(bodyParser.json());
 |--------------------------------------------------
 */
 app.post('/user', (req, res) => {
-    var comment = new Comment({
+    var comment = new User({
         email: req.body.email,
     });
 
